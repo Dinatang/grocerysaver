@@ -1,3 +1,4 @@
+// Punto de entrada y configuracion global del tema y rutas de la app.
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -9,10 +10,12 @@ import 'views/login_view.dart';
 import 'views/onboarding_view.dart';
 import 'views/register_view.dart';
 
+/// Inicializa la aplicacion principal de GrocerySaver.
 void main() {
   runApp(const GrocerySaverApp());
 }
 
+/// Widget raiz que comparte el `AuthViewModel` entre las pantallas de acceso.
 class GrocerySaverApp extends StatefulWidget {
   const GrocerySaverApp({super.key});
 
@@ -37,6 +40,7 @@ class _GrocerySaverAppState extends State<GrocerySaverApp> {
 
   @override
   Widget build(BuildContext context) {
+    // El esquema de color se centraliza aqui para mantener consistencia visual.
     final colorScheme = ColorScheme.fromSeed(
       seedColor: const Color(0xFF2F7D57),
       primary: const Color(0xFF2F7D57),
@@ -106,6 +110,7 @@ class _GrocerySaverAppState extends State<GrocerySaverApp> {
       ),
       initialRoute: '/onboarding',
       onGenerateRoute: (settings) {
+        // Las rutas comparten el mismo viewmodel para no duplicar estado auth.
         switch (settings.name) {
           case '/onboarding':
             return MaterialPageRoute(builder: (_) => const OnboardingView());

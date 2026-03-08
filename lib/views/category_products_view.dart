@@ -1,8 +1,10 @@
+// Pantalla de productos filtrados por una categoria concreta.
 import 'package:flutter/material.dart';
 
 import '../services/api_config.dart';
 import '../services/catalog_api.dart';
 
+/// Muestra productos pertenecientes a una categoria especifica.
 class CategoryProductsView extends StatefulWidget {
   const CategoryProductsView({
     super.key,
@@ -30,6 +32,7 @@ class _CategoryProductsViewState extends State<CategoryProductsView> {
     _loadProducts();
   }
 
+  /// Consulta los productos de la categoria seleccionada.
   Future<void> _loadProducts() async {
     setState(() {
       _isLoading = true;
@@ -57,6 +60,7 @@ class _CategoryProductsViewState extends State<CategoryProductsView> {
     );
   }
 
+  /// Escoge entre loading, error, vacio o grilla de productos.
   Widget _buildContent() {
     if (_isLoading && _products.isEmpty) {
       return ListView(
@@ -122,6 +126,7 @@ class _CategoryProductsViewState extends State<CategoryProductsView> {
     );
   }
 
+  /// Abre el detalle de un producto manteniendo datos ya cargados.
   void _openProductDetail(Map<String, dynamic> product) {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -139,30 +144,35 @@ class _CategoryProductsViewState extends State<CategoryProductsView> {
     );
   }
 
+  /// Devuelve el nombre visible del producto.
   String _name(Map<String, dynamic> product) {
     final raw = product['name'] ?? product['title'] ?? product['product'];
     final text = (raw ?? '').toString().trim();
     return text.isEmpty ? 'Producto' : text;
   }
 
+  /// Devuelve una descripcion breve o fallback legible.
   String _description(Map<String, dynamic> product) {
     final raw = product['description'] ?? product['brand'] ?? product['marca'];
     final text = (raw ?? '').toString().trim();
     return text.isEmpty ? 'Sin descripcion' : text;
   }
 
+  /// Devuelve la URL de imagen si existe.
   String? _imageUrl(Map<String, dynamic> product) {
     final raw = product['image'] ?? product['image_url'] ?? product['photo'];
     final text = (raw ?? '').toString().trim();
     return text.isEmpty ? null : text;
   }
 
+  /// Devuelve el precio visible de referencia.
   String _price(Map<String, dynamic> product) {
     final raw =
         product['best_price'] ?? product['price'] ?? product['min_price'];
     return raw == null ? '-' : '\$$raw';
   }
 
+  /// Calcula cuantas tiendas reportan el producto.
   String _storesAvailable(Map<String, dynamic> product) {
     final raw = product['stores_available'];
     if (raw != null && raw.toString().trim().isNotEmpty) return '$raw';
@@ -171,6 +181,7 @@ class _CategoryProductsViewState extends State<CategoryProductsView> {
     return '0';
   }
 
+  /// Resume la mejor opcion de compra dentro de una sola cadena.
   String _bestOption(Map<String, dynamic> product) {
     final best = product['best_option'];
     if (best is Map<String, dynamic>) {
@@ -193,6 +204,7 @@ class _CategoryProductsViewState extends State<CategoryProductsView> {
     return '-';
   }
 
+  /// Resuelve el nombre de categoria asociado al producto.
   String _categoryName(Map<String, dynamic> product) {
     final category = product['category'];
     if (category is Map<String, dynamic>) {
@@ -205,6 +217,7 @@ class _CategoryProductsViewState extends State<CategoryProductsView> {
     return text.isEmpty ? widget.categoryName : text;
   }
 
+  /// Convierte la lista cruda de precios a un modelo simple para detalle.
   List<_StorePrice> _priceRows(Map<String, dynamic> product) {
     final prices = product['prices'];
     if (prices is! List) return const [];
@@ -230,12 +243,14 @@ class _CategoryProductsViewState extends State<CategoryProductsView> {
     return rows;
   }
 
+  /// Traduce errores del servicio a texto apto para UI.
   String _errorToText(Object error) {
     if (error is CatalogApiException) return error.message;
     return 'No se pudieron cargar los productos.';
   }
 }
 
+/// Tarjeta compacta usada en la grilla de productos de la categoria.
 class _ProductTile extends StatelessWidget {
   const _ProductTile({
     required this.name,
@@ -323,6 +338,7 @@ class _ProductTile extends StatelessWidget {
   }
 }
 
+/// Vista de detalle para un producto dentro de la categoria.
 class _CategoryProductDetailView extends StatelessWidget {
   const _CategoryProductDetailView({
     required this.name,
@@ -424,6 +440,7 @@ class _CategoryProductDetailView extends StatelessWidget {
   }
 }
 
+/// Fila simple de metadatos usada en el detalle.
 class _InfoLine extends StatelessWidget {
   const _InfoLine({required this.label, required this.value});
 
@@ -456,6 +473,7 @@ class _InfoLine extends StatelessWidget {
   }
 }
 
+/// Modelo ligero de precio por tienda para la pantalla de detalle.
 class _StorePrice {
   const _StorePrice({required this.store, required this.price});
 
@@ -463,6 +481,7 @@ class _StorePrice {
   final String price;
 }
 
+/// Imagen del producto con fallback neutro si falla la carga remota.
 class _ProductImage extends StatelessWidget {
   const _ProductImage({required this.imageUrl});
 

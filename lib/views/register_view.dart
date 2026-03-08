@@ -1,9 +1,11 @@
+// Pantalla de registro con datos extendidos del usuario.
 import 'package:flutter/material.dart';
 
 import '../components/app_backdrop.dart';
 import '../components/auth_logo.dart';
 import '../viewmodels/auth_viewmodel.dart';
 
+/// Formulario de alta de usuario conectado al `AuthViewModel`.
 class RegisterView extends StatefulWidget {
   const RegisterView({super.key, required this.viewModel});
 
@@ -29,6 +31,7 @@ class _RegisterViewState extends State<RegisterView> {
   @override
   void initState() {
     super.initState();
+    // Los roles se cargan al entrar para poblar el dropdown.
     widget.viewModel.loadRoles();
   }
 
@@ -45,6 +48,7 @@ class _RegisterViewState extends State<RegisterView> {
     super.dispose();
   }
 
+  /// Abre el selector nativo de fechas y guarda el resultado en texto.
   Future<void> _pickBirthDate() async {
     final now = DateTime.now();
     final selected = await showDatePicker(
@@ -61,6 +65,7 @@ class _RegisterViewState extends State<RegisterView> {
     _birthDateController.text = _formatDate(selected);
   }
 
+  /// Formatea la fecha al contrato esperado por el backend.
   String _formatDate(DateTime date) {
     final y = date.year.toString().padLeft(4, '0');
     final m = date.month.toString().padLeft(2, '0');
@@ -68,6 +73,7 @@ class _RegisterViewState extends State<RegisterView> {
     return '$y-$m-$d';
   }
 
+  /// Valida y envia el formulario de registro.
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) {
       return;

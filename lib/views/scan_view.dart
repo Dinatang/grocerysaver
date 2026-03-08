@@ -1,8 +1,10 @@
+// Pantalla de escaneo por camara o ingreso manual de codigos.
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../services/scan_api.dart';
 
+/// Permite consultar o crear productos a partir de un barcode o QR.
 class ScanView extends StatefulWidget {
   const ScanView({super.key});
 
@@ -71,18 +73,21 @@ class _ScanViewState extends State<ScanView> with WidgetsBindingObserver {
     }
   }
 
+  /// Reanuda la camara cuando el usuario habilita autoescaneo.
   Future<void> _startCamera() async {
     try {
       await _cameraController.start();
     } catch (_) {}
   }
 
+  /// Pausa la camara para ahorrar recursos y evitar lecturas duplicadas.
   Future<void> _stopCamera() async {
     try {
       await _cameraController.stop();
     } catch (_) {}
   }
 
+  /// Alterna el flash y sincroniza el estado visible del boton.
   Future<void> _toggleTorch() async {
     try {
       await _cameraController.toggleTorch();
@@ -93,6 +98,7 @@ class _ScanViewState extends State<ScanView> with WidgetsBindingObserver {
     } catch (_) {}
   }
 
+  /// Restablece el flujo de autoescaneo despues de una pausa manual.
   Future<void> _resumeAutoScan() async {
     setState(() {
       _autoScanEnabled = true;
@@ -103,6 +109,7 @@ class _ScanViewState extends State<ScanView> with WidgetsBindingObserver {
     await _startCamera();
   }
 
+  /// Pausa el flujo de autoescaneo sin perder el estado del formulario.
   Future<void> _pauseAutoScan() async {
     setState(() {
       _autoScanEnabled = false;
@@ -110,6 +117,7 @@ class _ScanViewState extends State<ScanView> with WidgetsBindingObserver {
     await _stopCamera();
   }
 
+  /// Procesa una deteccion de la camara evitando duplicados y rafagas.
   Future<void> _onDetect(BarcodeCapture capture) async {
     if (!_autoScanEnabled || _isLoading || _isHandlingDetect) return;
 
@@ -145,10 +153,12 @@ class _ScanViewState extends State<ScanView> with WidgetsBindingObserver {
     }
   }
 
+  /// Clasifica el codigo detectado como QR o barcode tradicional.
   String _codeTypeFromBarcode(Barcode barcode) {
     return barcode.format == BarcodeFormat.qrCode ? 'qr' : 'barcode';
   }
 
+  /// Consulta el backend usando solo el codigo actual.
   Future<void> _scanOnly() async {
     final code = _codeController.text.trim();
     if (code.isEmpty) {
@@ -197,6 +207,7 @@ class _ScanViewState extends State<ScanView> with WidgetsBindingObserver {
     }
   }
 
+  /// Envia los datos manuales para crear un producto desde el escaneo.
   Future<void> _createFromScan() async {
     final code = _codeController.text.trim();
     final categoryId = int.tryParse(_categoryIdController.text.trim());
@@ -565,6 +576,7 @@ class _ScanViewState extends State<ScanView> with WidgetsBindingObserver {
     );
   }
 
+  /// Fila simple clave-valor para renderizar la respuesta del escaneo.
   Widget _resultRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),

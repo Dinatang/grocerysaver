@@ -1,8 +1,10 @@
+// Pantalla de clima con seleccion geografica para Ecuador.
 import 'package:flutter/material.dart';
 
 import '../services/ecuador_geo_api.dart';
 import '../services/weather_api.dart';
 
+/// Permite consultar clima por ciudad o seleccionando provincia y canton.
 class WeatherView extends StatefulWidget {
   const WeatherView({super.key, this.initialCity});
 
@@ -21,6 +23,8 @@ class _WeatherViewState extends State<WeatherView> {
   bool _isGeoLoading = false;
   String? _errorMessage;
   String? _geoErrorMessage;
+  String? _weatherCacheStatus;
+  String? _geoCacheStatus;
   WeatherSnapshot? _snapshot;
   List<Map<String, dynamic>> _provinces = const [];
   List<Map<String, dynamic>> _cantons = const [];
@@ -32,6 +36,7 @@ class _WeatherViewState extends State<WeatherView> {
     super.initState();
     _api = WeatherApi();
     _geoApi = EcuadorGeoApi();
+    // La ciudad inicial se normaliza porque a veces llega como direccion larga.
     _cityController = TextEditingController(
       text: _normalizeCity(widget.initialCity),
     );
@@ -45,6 +50,7 @@ class _WeatherViewState extends State<WeatherView> {
     super.dispose();
   }
 
+  /// Carga el clima de la ciudad actualmente seleccionada.
   Future<void> _loadWeather() async {
     final city = _cityController.text.trim();
     if (city.isEmpty) {
@@ -64,6 +70,7 @@ class _WeatherViewState extends State<WeatherView> {
       if (!mounted) return;
       setState(() {
         _snapshot = data;
+        _weatherCacheStatus = _api.lastCacheStatus;
       });
     } catch (e) {
       if (!mounted) return;
@@ -79,6 +86,7 @@ class _WeatherViewState extends State<WeatherView> {
     }
   }
 
+  /// Carga las provincias disponibles para el selector geografico.
   Future<void> _loadProvinces() async {
     setState(() {
       _isGeoLoading = true;
@@ -90,6 +98,7 @@ class _WeatherViewState extends State<WeatherView> {
       if (!mounted) return;
       setState(() {
         _provinces = provinces;
+        _geoCacheStatus = _geoApi.lastCacheStatus;
       });
     } catch (e) {
       if (!mounted) return;
@@ -105,6 +114,7 @@ class _WeatherViewState extends State<WeatherView> {
     }
   }
 
+  /// Cambia de provincia y vuelve a poblar la lista de cantones.
   Future<void> _onProvinceChanged(int? id) async {
     if (id == null) return;
 
@@ -121,6 +131,7 @@ class _WeatherViewState extends State<WeatherView> {
       if (!mounted) return;
       setState(() {
         _cantons = cantons;
+        _geoCacheStatus = _geoApi.lastCacheStatus;
       });
     } catch (e) {
       if (!mounted) return;
@@ -136,6 +147,7 @@ class _WeatherViewState extends State<WeatherView> {
     }
   }
 
+  /// Cambia de canton, sincroniza el texto de ciudad y recarga clima.
   Future<void> _onCantonChanged(int? id) async {
     if (id == null) return;
 
@@ -154,6 +166,7 @@ class _WeatherViewState extends State<WeatherView> {
     await _loadWeather();
   }
 
+  /// Convierte el id de una provincia o canton a entero.
   int? _itemId(Map<String, dynamic>? item) {
     final value = item?['id'];
     if (value is int) return value;
@@ -161,6 +174,7 @@ class _WeatherViewState extends State<WeatherView> {
     return int.tryParse((value ?? '').toString());
   }
 
+  /// Devuelve el nombre visible de una provincia o canton.
   String _itemName(Map<String, dynamic>? item) {
     return (item?['name'] ?? '').toString().trim();
   }
@@ -191,6 +205,13 @@ class _WeatherViewState extends State<WeatherView> {
                 _onCantonChanged(value);
               },
             ),
+            if (_weatherCacheStatus != null || _geoCacheStatus != null) ...[
+              const SizedBox(height: 10),
+              _CacheStatusCard(
+                weatherCacheStatus: _weatherCacheStatus,
+                geoCacheStatus: _geoCacheStatus,
+              ),
+            ],
             if (_geoErrorMessage != null) ...[
               const SizedBox(height: 12),
               _ErrorBanner(message: _geoErrorMessage!),
@@ -214,6 +235,7 @@ class _WeatherViewState extends State<WeatherView> {
     );
   }
 
+  /// Ajusta el texto recibido para usarlo como ciudad inicial.
   String _normalizeCity(String? raw) {
     final text = (raw ?? '').trim();
     if (text.isEmpty || text.toLowerCase() == 'tu ciudad') {
@@ -223,6 +245,64 @@ class _WeatherViewState extends State<WeatherView> {
   }
 }
 
+/// Tarjeta que resume el estado de cache de clima y geo.
+class _CacheStatusCard extends StatelessWidget {
+  const _CacheStatusCard({
+    required this.weatherCacheStatus,
+    required this.geoCacheStatus,
+  });
+
+  final String? weatherCacheStatus;
+  final String? geoCacheStatus;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        if (weatherCacheStatus != null)
+          _CacheChip(
+            label: 'Clima',
+            value: weatherCacheStatus!,
+          ),
+        if (geoCacheStatus != null)
+          _CacheChip(
+            label: 'Geo',
+            value: geoCacheStatus!,
+          ),
+      ],
+    );
+  }
+}
+
+/// Chip individual de cache para un modulo concreto.
+class _CacheChip extends StatelessWidget {
+  const _CacheChip({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE9F5ED),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        '$label cache: $value',
+        style: const TextStyle(
+          color: Color(0xFF20573A),
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+/// Selector encadenado de provincia y canton.
 class _GeoSelectorCard extends StatelessWidget {
   const _GeoSelectorCard({
     required this.provinces,
@@ -244,6 +324,7 @@ class _GeoSelectorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Se filtran ids invalidos para que el dropdown no rompa por valores huerfanos.
     final provinceItems = provinces
         .map((p) {
           final id = _itemId(p);
@@ -330,6 +411,7 @@ class _GeoSelectorCard extends StatelessWidget {
     );
   }
 
+  /// Convierte el id crudo de los items del selector.
   int? _itemId(Map<String, dynamic> item) {
     final raw = item['id'];
     if (raw is int) return raw;
@@ -338,6 +420,7 @@ class _GeoSelectorCard extends StatelessWidget {
   }
 }
 
+/// Tarjeta principal con la condicion meteorologica actual.
 class _CurrentWeatherCard extends StatelessWidget {
   const _CurrentWeatherCard({required this.snapshot});
 
@@ -418,6 +501,7 @@ class _CurrentWeatherCard extends StatelessWidget {
     );
   }
 
+  /// Mapea codigos meteorologicos a iconos locales.
   IconData _iconForCode(int code, bool isDay) {
     if (code == 0) {
       return isDay ? Icons.wb_sunny_rounded : Icons.nightlight_round;
@@ -435,6 +519,7 @@ class _CurrentWeatherCard extends StatelessWidget {
     return Icons.cloud_outlined;
   }
 
+  /// Traduce codigos meteorologicos a texto amigable.
   String _descriptionForCode(int code) {
     switch (code) {
       case 0:
@@ -479,6 +564,7 @@ class _CurrentWeatherCard extends StatelessWidget {
   }
 }
 
+/// Tarjeta con el pronostico diario resumido.
 class _ForecastCard extends StatelessWidget {
   const _ForecastCard({required this.days});
 
@@ -535,6 +621,7 @@ class _ForecastCard extends StatelessWidget {
     );
   }
 
+  /// Reduce la fecha a MM-DD para una lectura mas compacta.
   String _friendlyDate(String date) {
     if (date.length >= 10) {
       final mmdd = date.substring(5, 10);
@@ -544,6 +631,7 @@ class _ForecastCard extends StatelessWidget {
   }
 }
 
+/// Chip visual de metricas dentro de la tarjeta de clima actual.
 class _MetricChip extends StatelessWidget {
   const _MetricChip({required this.icon, required this.text});
 
@@ -582,6 +670,7 @@ class _MetricChip extends StatelessWidget {
   }
 }
 
+/// Banner de error reutilizable en la pantalla de clima.
 class _ErrorBanner extends StatelessWidget {
   const _ErrorBanner({required this.message});
 

@@ -1,5 +1,7 @@
+// Fondo decorativo reutilizable para pantallas de autenticacion y onboarding.
 import 'package:flutter/material.dart';
 
+/// Envuelve contenido en un fondo suave con degradado y formas flotantes.
 class AppBackdrop extends StatelessWidget {
   const AppBackdrop({
     super.key,
@@ -56,6 +58,7 @@ class AppBackdrop extends StatelessWidget {
     );
   }
 
+  /// Dibuja una burbuja decorativa sin introducir widgets adicionales.
   Widget _bubble({required double size, required Color color}) {
     return Container(
       width: size,

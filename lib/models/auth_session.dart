@@ -1,3 +1,4 @@
+// Modelo simple para conservar el estado autenticado del usuario actual.
 class AuthSession {
   const AuthSession({
     required this.email,
@@ -13,6 +14,7 @@ class AuthSession {
   final String? username;
   final String? role;
 
+  /// Construye la sesion a partir de la respuesta estandar del login.
   factory AuthSession.fromLoginResponse(
     Map<String, dynamic> data, {
     String fallbackEmail = '',

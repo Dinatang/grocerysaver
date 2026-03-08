@@ -1,7 +1,9 @@
+// Estado y adaptadores de datos para catalogo, categorias y comparaciones.
 import 'package:flutter/foundation.dart';
 
 import '../services/catalog_api.dart';
 
+/// ViewModel central del catalogo mostrado desde `Home` y pantallas derivadas.
 class CatalogViewModel extends ChangeNotifier {
   CatalogViewModel({required CatalogApi api}) : _api = api;
 
@@ -29,6 +31,7 @@ class CatalogViewModel extends ChangeNotifier {
   int? get selectedCategoryId => _selectedCategoryId;
   String get searchQuery => _searchQuery;
 
+  /// Carga tiendas, categorias y productos iniciales en paralelo.
   Future<void> loadInitialData() async {
     _isLoading = true;
     _errorMessage = null;
@@ -54,20 +57,24 @@ class CatalogViewModel extends ChangeNotifier {
     }
   }
 
+  /// Vuelve a cargar todo el estado visible del catalogo.
   Future<void> refresh() async {
     await loadInitialData();
   }
 
+  /// Aplica el filtro de categoria activo.
   Future<void> selectCategoryById(int? categoryId) async {
     _selectedCategoryId = categoryId;
     await _loadProducts();
   }
 
+  /// Aplica el texto de busqueda y recarga los productos filtrados.
   Future<void> updateSearch(String value) async {
     _searchQuery = value.trim();
     await _loadProducts();
   }
 
+  /// Compara el primer producto visible o el termino de busqueda actual.
   Future<void> compareCurrent() async {
     _isLoadingCompare = true;
     notifyListeners();
@@ -93,6 +100,7 @@ class CatalogViewModel extends ChangeNotifier {
     }
   }
 
+  /// Recarga productos con los filtros seleccionados y actualiza la comparacion.
   Future<void> _loadProducts() async {
     _isLoading = true;
     _errorMessage = null;
@@ -112,43 +120,51 @@ class CatalogViewModel extends ChangeNotifier {
     }
   }
 
+  /// Convierte listas dinamicas del backend a listas de mapas seguras.
   List<Map<String, dynamic>> _toMapList(dynamic value) {
     if (value is! List) return const [];
     return value.whereType<Map<String, dynamic>>().toList();
   }
 
+  /// Obtiene el id de categoria tolerando respuestas serializadas como texto.
   int? categoryId(Map<String, dynamic> category) {
     return int.tryParse((category['id'] ?? '').toString());
   }
 
+  /// Devuelve el nombre presentable de una categoria.
   String categoryName(Map<String, dynamic> category) {
     final raw = category['name'] ?? category['category'] ?? category['title'];
     final text = (raw ?? '').toString().trim();
     return text.isEmpty ? 'Categoria' : text;
   }
 
+  /// Devuelve la imagen asociada a una categoria si existe.
   String? categoryImageUrl(Map<String, dynamic> category) {
     final raw = category['image'] ?? category['image_url'] ?? category['icon'];
     final text = (raw ?? '').toString().trim();
     return text.isEmpty ? null : text;
   }
 
+  /// Devuelve el nombre de una tienda con tolerancia a distintos contratos.
   String storeName(Map<String, dynamic> store) {
     final raw = store['name'] ?? store['store'] ?? store['store_name'];
     final text = (raw ?? '').toString().trim();
     return text.isEmpty ? 'Tienda' : text;
   }
 
+  /// Devuelve el nombre visible de un producto.
   String productName(Map<String, dynamic> product) {
     return _productName(product) ?? 'Producto';
   }
 
+  /// Devuelve la URL de imagen del producto cuando existe.
   String? productImageUrl(Map<String, dynamic> product) {
     final raw = product['image'] ?? product['image_url'] ?? product['photo'];
     final text = (raw ?? '').toString().trim();
     return text.isEmpty ? null : text;
   }
 
+  /// Resuelve el nombre de categoria visible del producto.
   String productCategoryName(Map<String, dynamic> product) {
     final category = product['category'];
     if (category is Map<String, dynamic>) {
@@ -161,6 +177,7 @@ class CatalogViewModel extends ChangeNotifier {
     return text.isEmpty ? 'Sin categoria' : text;
   }
 
+  /// Expone descripcion o marca con un fallback consistente.
   String productDescription(Map<String, dynamic> product) {
     final raw =
         product['description'] ??
@@ -177,6 +194,7 @@ class CatalogViewModel extends ChangeNotifier {
     return productDescription(product);
   }
 
+  /// Devuelve el mejor precio disponible en formato simple para tarjetas.
   String productPrice(Map<String, dynamic> product) {
     final raw =
         product['best_price'] ??
@@ -188,6 +206,7 @@ class CatalogViewModel extends ChangeNotifier {
     return '\$$raw';
   }
 
+  /// Intenta identificar la tienda principal asociada al producto.
   String productStore(Map<String, dynamic> product) {
     final raw = product['store'] ?? product['store_name'] ?? product['market'];
     if (raw != null && raw.toString().trim().isNotEmpty) {
@@ -209,12 +228,14 @@ class CatalogViewModel extends ChangeNotifier {
     return text.isEmpty ? 'Sin tienda' : text;
   }
 
+  /// Devuelve la lista de precios por tienda ya filtrada a mapas.
   List<Map<String, dynamic>> productPriceRows(Map<String, dynamic> product) {
     final prices = product['prices'];
     if (prices is! List) return const [];
     return prices.whereType<Map<String, dynamic>>().toList();
   }
 
+  /// Devuelve el nombre visible de la tienda dentro de una fila de precios.
   String priceRowStoreName(Map<String, dynamic> row) {
     final store = row['store'];
     if (store is Map<String, dynamic>) {
@@ -227,12 +248,14 @@ class CatalogViewModel extends ChangeNotifier {
     return text.isEmpty ? 'Tienda' : text;
   }
 
+  /// Formatea el precio de una fila de comparacion.
   String priceRowPrice(Map<String, dynamic> row) {
     final raw = row['price'] ?? row['amount'] ?? row['value'];
     if (raw == null) return 'N/A';
     return '\$$raw';
   }
 
+  /// Calcula cuantas tiendas reportan precio para el producto.
   int productStoresAvailable(Map<String, dynamic> product) {
     final raw = product['stores_available'];
     if (raw is int) return raw;
@@ -241,6 +264,7 @@ class CatalogViewModel extends ChangeNotifier {
     return productPriceRows(product).length;
   }
 
+  /// Expone el nombre de la mejor opcion de compra para el producto.
   String productBestOptionStore(Map<String, dynamic> product) {
     final best = product['best_option'];
     if (best is Map<String, dynamic>) {
@@ -260,6 +284,7 @@ class CatalogViewModel extends ChangeNotifier {
     return productStore(product);
   }
 
+  /// Expone el precio de la mejor opcion de compra.
   String productBestOptionPrice(Map<String, dynamic> product) {
     final best = product['best_option'];
     if (best is Map<String, dynamic>) {
@@ -271,6 +296,7 @@ class CatalogViewModel extends ChangeNotifier {
     return productPrice(product);
   }
 
+  /// Calcula un badge de ahorro relativo entre el minimo y el maximo.
   String? productDiscountBadge(Map<String, dynamic> product) {
     final rows = productPriceRows(product);
     if (rows.length < 2) return null;
@@ -294,6 +320,7 @@ class CatalogViewModel extends ChangeNotifier {
     return '+$percent%';
   }
 
+  /// Devuelve la mejor tienda de la comparacion global actual.
   String? bestStoreName() {
     final best = compareResult?['best_option'];
     if (best is Map<String, dynamic>) {
@@ -304,6 +331,7 @@ class CatalogViewModel extends ChangeNotifier {
     return null;
   }
 
+  /// Devuelve el mejor precio de la comparacion global actual.
   String? bestPrice() {
     final best = compareResult?['best_option'];
     if (best is Map<String, dynamic>) {
@@ -313,12 +341,14 @@ class CatalogViewModel extends ChangeNotifier {
     return null;
   }
 
+  /// Busca el nombre crudo del producto sin aplicar fallback visual.
   String? _productName(Map<String, dynamic> product) {
     final raw = product['name'] ?? product['product'] ?? product['title'];
     final text = (raw ?? '').toString().trim();
     return text.isEmpty ? null : text;
   }
 
+  /// Calcula el menor precio recorriendo la lista de precios embebida.
   dynamic _bestPriceFromPrices(Map<String, dynamic> product) {
     final rows = productPriceRows(product);
     if (rows.isEmpty) return null;
@@ -335,6 +365,7 @@ class CatalogViewModel extends ChangeNotifier {
     return best;
   }
 
+  /// Traduce errores del servicio a mensajes para UI.
   String _errorToText(Object error) {
     if (error is CatalogApiException) {
       return error.message;

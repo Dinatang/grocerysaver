@@ -1,8 +1,10 @@
+// Estado de autenticacion consumido por login, registro y home.
 import 'package:flutter/foundation.dart';
 
 import '../models/auth_session.dart';
 import '../services/auth_api.dart';
 
+/// Coordina el flujo de autenticacion entre la UI y `AuthApi`.
 class AuthViewModel extends ChangeNotifier {
   AuthViewModel({required AuthApi api}) : _api = api;
 
@@ -31,6 +33,7 @@ class AuthViewModel extends ChangeNotifier {
   Map<String, dynamic>? get profileData => _profileData;
   Map<String, dynamic>? get adminOnlyData => _adminOnlyData;
 
+  /// Carga los roles del backend para mantener el registro sincronizado.
   Future<void> loadRoles() async {
     _isLoadingRoles = true;
     _errorMessage = null;
@@ -51,6 +54,7 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
+  /// Actualiza el rol elegido en el formulario de registro.
   void selectRole(String? role) {
     if (role == null || role == _selectedRole) {
       return;
@@ -59,6 +63,7 @@ class AuthViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Ejecuta el login y construye la sesion local si el backend responde OK.
   Future<bool> login({required String email, required String password}) async {
     _startRequest();
     try {
@@ -77,6 +82,7 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
+  /// Registra una cuenta nueva y maneja la verificacion debug cuando existe.
   Future<bool> register({
     required String username,
     required String email,
@@ -119,6 +125,7 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
+  /// Carga el perfil autenticado actual.
   Future<bool> loadMe() async {
     _isLoadingProtected = true;
     _errorMessage = null;
@@ -135,6 +142,7 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
+  /// Carga una ruta protegida exclusiva de administracion.
   Future<bool> loadAdminOnly() async {
     _isLoadingProtected = true;
     _errorMessage = null;
@@ -151,6 +159,7 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
+  /// Cierra sesion tanto en backend como en el estado local.
   Future<void> logout() async {
     try {
       await _api.logout();
@@ -165,12 +174,14 @@ class AuthViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Limpia mensajes transitorios mostrados por la UI.
   void clearMessages() {
     _errorMessage = null;
     _infoMessage = null;
     notifyListeners();
   }
 
+  /// Marca el inicio de una operacion principal de autenticacion.
   void _startRequest() {
     _isLoading = true;
     _errorMessage = null;
@@ -178,11 +189,13 @@ class AuthViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Restablece el indicador de carga principal.
   void _finishRequest() {
     _isLoading = false;
     notifyListeners();
   }
 
+  /// Traduce errores tecnicos a mensajes adecuados para la interfaz.
   String _errorToText(Object error) {
     if (error is ApiException) {
       return error.message;

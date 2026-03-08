@@ -1,8 +1,10 @@
+// Cliente HTTP para datos de perfil, direcciones y preferencias.
 import 'dart:convert';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
+/// Error especifico del modulo de perfil.
 class ProfileApiException implements Exception {
   ProfileApiException(this.message, {this.statusCode});
 
@@ -16,6 +18,7 @@ class ProfileApiException implements Exception {
   }
 }
 
+/// Encapsula llamadas protegidas relacionadas con perfil y preferencias.
 class ProfileApi {
   ProfileApi(String baseUrl)
     : baseUrl = baseUrl.replaceFirst(RegExp(r'/$'), ''),
@@ -29,6 +32,7 @@ class ProfileApi {
     'Accept': 'application/json',
   };
 
+  /// Recupera headers autenticados para endpoints privados.
   Future<Map<String, String>> _authHeaders() async {
     final token = await _storage.read(key: 'access');
     if (token == null || token.isEmpty) {
@@ -37,6 +41,7 @@ class ProfileApi {
     return {..._jsonHeaders, 'Authorization': 'Bearer $token'};
   }
 
+  /// Obtiene los datos principales del usuario autenticado.
   Future<Map<String, dynamic>> getMe() async {
     const endpoint = '/auth/me/';
     final res = await http.get(
@@ -51,6 +56,7 @@ class ProfileApi {
     return data;
   }
 
+  /// Obtiene las direcciones asociadas al perfil.
   Future<List<dynamic>> getAddresses() async {
     const endpoint = '/profile/addresses/';
     final res = await http.get(
@@ -65,6 +71,7 @@ class ProfileApi {
     return const [];
   }
 
+  /// Crea una nueva direccion usando el payload recibido desde la UI.
   Future<Map<String, dynamic>> createAddress(Map<String, dynamic> body) async {
     const endpoint = '/profile/addresses/';
     final res = await http.post(
@@ -80,6 +87,7 @@ class ProfileApi {
     return data;
   }
 
+  /// Actualiza una direccion existente por identificador.
   Future<Map<String, dynamic>> updateAddress(
     int id,
     Map<String, dynamic> body,
@@ -98,6 +106,7 @@ class ProfileApi {
     return data;
   }
 
+  /// Elimina una direccion guardada.
   Future<void> deleteAddress(int id) async {
     final endpoint = '/profile/addresses/$id/';
     final res = await http.delete(
@@ -111,6 +120,7 @@ class ProfileApi {
     throw ProfileApiException('Error eliminando direccion', statusCode: 500);
   }
 
+  /// Consulta las preferencias de notificacion actuales.
   Future<Map<String, dynamic>> getNotificationPrefs() async {
     const endpoint = '/profile/notifications/';
     final res = await http.get(
@@ -125,6 +135,7 @@ class ProfileApi {
     return data;
   }
 
+  /// Actualiza el mapa completo de preferencias de notificacion.
   Future<Map<String, dynamic>> updateNotificationPrefs(
     Map<String, dynamic> body,
   ) async {
@@ -142,6 +153,7 @@ class ProfileApi {
     return data;
   }
 
+  /// Consulta las rifas activas visibles para el usuario.
   Future<List<dynamic>> getActiveRaffles() async {
     const endpoint = '/raffles/active/';
     final res = await http.get(
@@ -156,6 +168,7 @@ class ProfileApi {
     return const [];
   }
 
+  /// Obtiene el historial de solicitudes de cambio de rol.
   Future<List<dynamic>> getRoleChangeRequests() async {
     const endpoint = '/profile/role-change-requests/';
     final res = await http.get(
@@ -170,6 +183,7 @@ class ProfileApi {
     return const [];
   }
 
+  /// Crea una nueva solicitud de cambio de rol.
   Future<Map<String, dynamic>> createRoleChangeRequest(
     String role, {
     String reason = '',
@@ -188,6 +202,7 @@ class ProfileApi {
     return data;
   }
 
+  /// Valida el cuerpo JSON y estandariza errores del backend.
   Map<String, dynamic> _decode(http.Response res, {required String endpoint}) {
     final contentType = (res.headers['content-type'] ?? '').toLowerCase();
     final body = res.body.trim();
@@ -218,6 +233,7 @@ class ProfileApi {
     );
   }
 
+  /// Extrae un mensaje claro desde respuestas de error heterogeneas.
   String _extractMessage(Map<String, dynamic> data) {
     if (data['detail'] != null) return data['detail'].toString();
     if (data['message'] != null) return data['message'].toString();
@@ -226,6 +242,7 @@ class ProfileApi {
     return '';
   }
 
+  /// Recorta el body para evitar mensajes de error demasiado largos.
   String _preview(String body) {
     if (body.isEmpty) return '(sin contenido)';
     const limit = 180;

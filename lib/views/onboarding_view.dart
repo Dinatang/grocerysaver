@@ -1,7 +1,9 @@
+// Pantalla de bienvenida inicial antes del login.
 import 'package:flutter/material.dart';
 
 import '../components/app_backdrop.dart';
 
+/// Presenta los beneficios principales de la app antes del acceso.
 class OnboardingView extends StatefulWidget {
   const OnboardingView({super.key});
 
@@ -13,6 +15,7 @@ class _OnboardingViewState extends State<OnboardingView> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
+  // Los pasos son estaticos porque el contenido no depende de estado remoto.
   static const List<_OnboardingStep> _steps = [
     _OnboardingStep(
       title: 'Bienvenido a GrocerySaver',
@@ -48,6 +51,7 @@ class _OnboardingViewState extends State<OnboardingView> {
     super.dispose();
   }
 
+  /// Avanza al siguiente paso o redirige al login al terminar.
   Future<void> _next() async {
     if (_isLastPage) {
       _goToLogin();
@@ -59,6 +63,7 @@ class _OnboardingViewState extends State<OnboardingView> {
     );
   }
 
+  /// Salta directamente al flujo de autenticacion.
   void _goToLogin() {
     Navigator.pushReplacementNamed(context, '/login');
   }
@@ -140,6 +145,7 @@ class _OnboardingViewState extends State<OnboardingView> {
   }
 }
 
+/// Vista individual de cada paso del onboarding.
 class _OnboardingPage extends StatelessWidget {
   const _OnboardingPage({required this.step});
 
@@ -181,6 +187,7 @@ class _OnboardingPage extends StatelessWidget {
   }
 }
 
+/// Datos inmutables de una tarjeta de onboarding.
 class _OnboardingStep {
   const _OnboardingStep({
     required this.title,

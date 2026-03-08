@@ -1,9 +1,11 @@
+// Pantalla de ofertas con filtros, debounce e infiniscroll.
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 
 import '../services/offers_api.dart';
 
+/// Lista paginada de ofertas activas con filtros por tienda y categoria.
 class OffersView extends StatefulWidget {
   const OffersView({super.key});
 
@@ -52,6 +54,7 @@ class _OffersViewState extends State<OffersView> {
     super.dispose();
   }
 
+  /// Dispara carga incremental cuando el usuario llega cerca del final.
   void _onScroll() {
     if (!_scrollController.hasClients) return;
     if (_isInitialLoading || _isLoadingMore || !_hasMore) return;
@@ -62,10 +65,12 @@ class _OffersViewState extends State<OffersView> {
     }
   }
 
+  /// Reinicia la lista desde la primera pagina.
   Future<void> _refresh() async {
     await _loadFirstPage();
   }
 
+  /// Reinicia estado, filtros remotos y pagina actual.
   Future<void> _loadFirstPage() async {
     final token = ++_queryToken;
     setState(() {
@@ -81,12 +86,14 @@ class _OffersViewState extends State<OffersView> {
     await _loadPage(page: 1, append: false, token: token);
   }
 
+  /// Solicita la siguiente pagina si todavia hay resultados por cargar.
   Future<void> _loadNextPage() async {
     if (_isInitialLoading || _isLoadingMore || !_hasMore) return;
     final token = _queryToken;
     await _loadPage(page: _currentPage + 1, append: true, token: token);
   }
 
+  /// Ejecuta la consulta principal y fusiona resultados sin duplicados.
   Future<void> _loadPage({
     required int page,
     required bool append,
@@ -154,6 +161,7 @@ class _OffersViewState extends State<OffersView> {
     }
   }
 
+  /// Evita mostrar ofertas repetidas cuando el backend pagina de forma inestable.
   List<Map<String, dynamic>> _mergeUniqueOffers(
     List<Map<String, dynamic>> current,
     List<Map<String, dynamic>> incoming,
@@ -171,6 +179,7 @@ class _OffersViewState extends State<OffersView> {
     return merged;
   }
 
+  /// Genera una clave estable para deduplicar ofertas.
   String _offerIdentity(Map<String, dynamic> offer) {
     final offerId = offer['id'];
     if (offerId != null) {
@@ -195,6 +204,7 @@ class _OffersViewState extends State<OffersView> {
     return 'pk:$productId-$storeId-$normalPrice-$offerPrice-$until';
   }
 
+  /// Recalcula las opciones de filtro a partir de las ofertas visibles.
   _FilterData _buildFilterData(List<Map<String, dynamic>> offers) {
     final stores = <int, String>{};
     final categories = <int, String>{};
@@ -241,12 +251,14 @@ class _OffersViewState extends State<OffersView> {
     return _FilterData(stores: storeItems, categories: categoryItems);
   }
 
+  /// Debounce del buscador para no recargar en cada tecla.
   void _onSearchChanged(String value) {
     setState(() {});
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 350), _loadFirstPage);
   }
 
+  /// Aplica el filtro de tienda.
   void _onStoreChanged(int? id) {
     setState(() {
       _selectedStoreId = id;
@@ -254,6 +266,7 @@ class _OffersViewState extends State<OffersView> {
     _loadFirstPage();
   }
 
+  /// Aplica el filtro de categoria.
   void _onCategoryChanged(int? id) {
     setState(() {
       _selectedCategoryId = id;
@@ -261,6 +274,7 @@ class _OffersViewState extends State<OffersView> {
     _loadFirstPage();
   }
 
+  /// Restablece los filtros locales a su estado inicial.
   void _clearFilters() {
     _debounce?.cancel();
     _searchController.clear();
@@ -353,6 +367,7 @@ class _OffersViewState extends State<OffersView> {
     );
   }
 
+  /// Cabecera visual que resume el objetivo del modulo.
   Widget _buildHeroCard() {
     return Container(
       padding: const EdgeInsets.all(14),
@@ -382,6 +397,7 @@ class _OffersViewState extends State<OffersView> {
     );
   }
 
+  /// Construye los filtros y controles de busqueda de la pantalla.
   Widget _buildFiltersCard() {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -493,15 +509,18 @@ class _OffersViewState extends State<OffersView> {
     );
   }
 
+  /// Convierte ids de filtros a enteros seguros.
   int? _asInt(dynamic raw) {
     if (raw is int) return raw;
     if (raw is num) return raw.toInt();
     return int.tryParse((raw ?? '').toString().trim());
   }
 
+  /// Convierte cualquier valor a texto recortado.
   String _asText(dynamic raw) => (raw ?? '').toString().trim();
 }
 
+/// Tarjeta visual de una oferta individual.
 class _OfferCard extends StatelessWidget {
   const _OfferCard({required this.offer});
 
@@ -651,16 +670,19 @@ class _OfferCard extends StatelessWidget {
     );
   }
 
+  /// Devuelve texto con fallback explicito.
   String _text(dynamic raw, {required String fallback}) {
     final value = (raw ?? '').toString().trim();
     return value.isEmpty ? fallback : value;
   }
 
+  /// Convierte a numero tolerando strings.
   num? _asNum(dynamic raw) {
     if (raw is num) return raw;
     return num.tryParse((raw ?? '').toString().trim());
   }
 
+  /// Formatea valores monetarios.
   String _currency(dynamic raw) {
     final value = _asNum(raw);
     if (value == null) return 'N/A';
@@ -668,6 +690,7 @@ class _OfferCard extends StatelessWidget {
     return '\$${value.toStringAsFixed(2)}';
   }
 
+  /// Formatea el porcentaje de descuento.
   String _discount(dynamic raw) {
     final value = _asNum(raw);
     if (value == null) return 'Oferta';
@@ -675,6 +698,7 @@ class _OfferCard extends StatelessWidget {
     return '-${value.toStringAsFixed(1)}%';
   }
 
+  /// Calcula el ahorro absoluto entre precio normal y oferta.
   String _savings(dynamic normalRaw, dynamic offerRaw) {
     final normal = _asNum(normalRaw);
     final offer = _asNum(offerRaw);
@@ -685,6 +709,7 @@ class _OfferCard extends StatelessWidget {
   }
 }
 
+/// Chip de precio o ahorro usado dentro de la tarjeta de oferta.
 class _PriceTag extends StatelessWidget {
   const _PriceTag({
     required this.label,
@@ -725,6 +750,7 @@ class _PriceTag extends StatelessWidget {
   }
 }
 
+/// Estado vacio o de error con CTA de reintento.
 class _StateMessage extends StatelessWidget {
   const _StateMessage({
     required this.icon,
@@ -772,6 +798,7 @@ class _StateMessage extends StatelessWidget {
   }
 }
 
+/// Opcion de filtro identificada por id y nombre.
 class _FilterItem {
   const _FilterItem({required this.id, required this.name});
 
@@ -779,6 +806,7 @@ class _FilterItem {
   final String name;
 }
 
+/// Agrupa los filtros construidos a partir de la respuesta actual.
 class _FilterData {
   const _FilterData({required this.stores, required this.categories});
 

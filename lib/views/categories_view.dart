@@ -1,8 +1,10 @@
+// Pantalla con el catalogo completo de categorias.
 import 'package:flutter/material.dart';
 
 import '../viewmodels/catalog_viewmodel.dart';
 import 'category_products_view.dart';
 
+/// Lista visual de categorias cargadas desde el catalogo compartido.
 class CategoriesView extends StatelessWidget {
   const CategoriesView({super.key, required this.catalogViewModel});
 
@@ -26,6 +28,7 @@ class CategoriesView extends StatelessWidget {
     );
   }
 
+  /// Resuelve el estado correcto entre carga, vacio y grilla de categorias.
   Widget _buildContent(
     BuildContext context,
     List<Map<String, dynamic>> categories,
@@ -88,6 +91,7 @@ class CategoriesView extends StatelessWidget {
   }
 }
 
+/// Tarjeta individual de categoria.
 class _CategoryCard extends StatelessWidget {
   const _CategoryCard({
     required this.label,
@@ -134,6 +138,7 @@ class _CategoryCard extends StatelessWidget {
   }
 }
 
+/// Imagen o icono fallback para una categoria.
 class _CategoryImage extends StatelessWidget {
   const _CategoryImage({required this.imageUrl});
 

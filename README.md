@@ -1,106 +1,146 @@
 # GrocerySaver
 
-Aplicacion movil inteligente para comparar precios de alimentos entre supermercados y comercios locales, ayudando a las familias a ahorrar tiempo y dinero.
+Aplicacion Flutter para comparar productos, revisar ofertas, consultar clima por ubicacion en Ecuador, escanear codigos y gestionar datos de perfil desde una sola interfaz.
 
-## Objetivo
+## Resumen.
 
-Facilitar decisiones de compra economicas mediante informacion actualizada de precios, promociones y opciones cercanas desde un solo lugar.
+El proyecto esta orientado a compras inteligentes. La app consume una API REST propia y organiza la logica en capas simples:
 
-## Problema
+- `views`: pantallas y widgets de interfaz.
+- `viewmodels`: estado y logica de presentacion.
+- `services`: integracion HTTP y utilidades de infraestructura.
+- `models`: modelos de sesion y datos tipados.
+- `components`: piezas visuales reutilizables.
 
-Los precios de productos basicos cambian entre tiendas y no siempre existe una herramienta practica para comparar rapidamente, planificar compras y controlar el gasto mensual.
+## Funcionalidades actuales
 
-## Publico Objetivo
+- Onboarding inicial.
+- Registro, login, verificacion debug y cierre de sesion.
+- Carga de perfil y preferencias de notificaciones.
+- Catalogo de categorias y productos.
+- Comparador de precios por producto.
+- Listado paginado de ofertas con filtros.
+- Consulta de clima por ciudad, provincia y canton.
+- Escaneo de barcode o QR con soporte para crear productos si no existen.
+- Encolado y seguimiento de jobs para exportar productos.
 
-- Hogares que quieren optimizar su presupuesto.
-- Jovenes y estudiantes que buscan opciones economicas.
-- Personas responsables de las compras semanales.
-- Usuarios interesados en promociones y control de gasto.
+## Estructura principal
 
-## Funcionalidades
+```text
+lib/
+  components/    Widgets reutilizables de apoyo visual
+  models/        Modelos del dominio usados en la UI
+  services/      Clientes HTTP, config y helpers
+  viewmodels/    Estado y coordinacion entre UI y servicios
+  views/         Pantallas principales de la aplicacion
+test/
+  widget_test.dart
+```
 
-### Implementadas
+## Requisitos
 
-- Registro de usuarios con correo y contrasena.
-- Inicio de sesion con correo y contrasena.
-- Verificacion de correo en modo debug (cuando el backend devuelve `verification_token_debug`).
-- Pantallas base de `Login`, `Register` y `Home`.
-- Integracion con API REST usando `http`.
+- Flutter SDK 3.x
+- Dart SDK compatible con `sdk: ^3.10.7`
+- Un backend disponible bajo una URL base `/api`
 
-### Planificadas
+Dependencias relevantes:
 
-- Comparador de precios entre supermercados y tiendas locales.
-- Geolocalizacion para encontrar ofertas cercanas.
-- Lista de compras inteligente con calculo de total.
-- Alertas de promociones por productos favoritos.
-- Historial de compras y seguimiento de gasto mensual.
-
-## Alcance del MVP
-
-- Autenticacion completa y estable con API.
-- Flujo basico de usuario: crear cuenta, iniciar sesion, cerrar sesion.
-- Base tecnica para integrar modulos de precios, ofertas y listas.
-
-## Arquitectura Actual
-
-- `lib/models`: modelos de datos.
-- `lib/services`: consumo de API y configuracion.
-- `lib/viewmodels`: logica de presentacion y estado.
-- `lib/views`: interfaz de usuario.
-- `lib/components`: componentes reutilizables (ej. logo de autenticacion).
+- `http`
+- `google_fonts`
+- `flutter_secure_storage`
+- `mobile_scanner`
 
 ## Configuracion de API
 
-La app toma la URL base desde `API_BASE_URL` (`--dart-define`).
+La URL base se toma desde `API_BASE_URL` usando `--dart-define`.
 
-Valores recomendados:
+Valores comunes:
 
-- Navegador (web): `http://127.0.0.1:8000/api`
-- Emulador Android: `http://10.0.2.2:8000/api`
-- Dispositivo fisico (misma red): `http://192.168.1.11:8000/api`
+- Web: `http://127.0.0.1:8000/api`
+- Android emulator: `http://10.0.2.2:8000/api`
+- Desktop local: `http://127.0.0.1:8000/api`
+- Dispositivo fisico: `http://<tu-ip-local>:8000/api`
 
-## Como Ejecutar
-
-1. Instalar dependencias:
-
-```bash
-flutter pub get
-```
-
-2. Ejecutar en navegador:
+Ejemplo:
 
 ```bash
 flutter run -d chrome --dart-define=API_BASE_URL=http://127.0.0.1:8000/api
 ```
 
-3. Ejecutar en emulador Android:
+## Instalacion
+
+```bash
+flutter pub get
+```
+
+## Ejecucion
+
+### Web
+
+```bash
+flutter run -d chrome --dart-define=API_BASE_URL=http://127.0.0.1:8000/api
+```
+
+### Android emulator
 
 ```bash
 flutter run -d emulator-5554 --dart-define=API_BASE_URL=http://10.0.2.2:8000/api
 ```
 
-4. Ejecutar en dispositivo fisico:
+### Windows / desktop
 
 ```bash
-flutter run --dart-define=API_BASE_URL=http://192.168.1.11:8000/api
+flutter run -d windows --dart-define=API_BASE_URL=http://127.0.0.1:8000/api
 ```
 
-## Requisitos de Backend
+## Calidad basica
 
-- Exponer endpoints bajo `/api/auth/...` (ejemplo: `/api/auth/register/`).
-- Responder en formato JSON.
-- En desarrollo web, habilitar CORS para el origen de Flutter (`localhost`/`127.0.0.1` con su puerto).
-- Si se usa servidor local para dispositivos fisicos, ejecutar backend con:
+Analisis estatico:
 
 ```bash
-python manage.py runserver 0.0.0.0:8000
+flutter analyze
 ```
 
-## Roadmap Tecnico
+Tests:
 
-1. Persistencia segura de sesion (`flutter_secure_storage`).
-2. Repositorio de precios y cache local.
-3. Geolocalizacion y filtrado por distancia.
-4. Motor de comparacion y ranking de ofertas.
-5. Modulo de lista inteligente y alertas.
-6. Analitica de gasto mensual y reportes.
+```bash
+flutter test
+```
+
+## Requisitos del backend
+
+El backend debe responder JSON y exponer, como minimo, estos grupos de endpoints:
+
+- `/auth/...`
+- `/stores/`
+- `/categories/`
+- `/products/`
+- `/compare-prices/`
+- `/offers/`
+- `/weather/`
+- `/geo/ecuador/provinces/`
+- `/geo/ecuador/cantons/`
+- `/products/scan/`
+- `/profile/...`
+- `/jobs/...`
+- `/raffles/active/`
+
+Tambien debe:
+
+- Permitir CORS en desarrollo web.
+- Exponer autenticacion basada en token Bearer.
+- Responder headers de cache cuando aplique, por ejemplo `x-cache-status`.
+
+## Flujo principal
+
+1. El usuario entra por onboarding.
+2. Inicia sesion o crea una cuenta.
+3. Desde `Home` navega a categorias, comparador, ofertas, clima, escaneo y perfil.
+4. Los `viewmodels` coordinan la UI y los `services`.
+5. Los `services` consumen la API y traducen errores a mensajes manejables.
+
+## Notas para desarrollo
+
+- La app usa `flutter_secure_storage` para tokens.
+- La configuracion de API vive en `lib/services/api_config.dart`.
+- Los comentarios del codigo fueron ampliados para dejar documentada la intencion de cada modulo.

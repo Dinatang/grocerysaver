@@ -1,5 +1,7 @@
+// Resolucion de la URL base de la API segun plataforma o variables de entorno.
 import 'package:flutter/foundation.dart';
 
+/// Centraliza la configuracion de conectividad para todos los servicios HTTP.
 class ApiConfig {
   const ApiConfig._();
 
@@ -13,6 +15,7 @@ class ApiConfig {
     defaultValue: '',
   );
 
+  /// Devuelve la URL activa priorizando `API_BASE_URL` cuando esta definida.
   static String get baseUrl {
     if (_envBaseUrl.isNotEmpty) {
       return _envBaseUrl;

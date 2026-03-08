@@ -1,3 +1,4 @@
+// Pantalla principal con accesos rapidos al resto de modulos.
 import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
@@ -14,6 +15,7 @@ import 'profile_view.dart';
 import 'scan_view.dart';
 import 'weather_view.dart';
 
+/// Home principal mostrado despues del login.
 class HomeView extends StatefulWidget {
   const HomeView({super.key, required this.viewModel});
 
@@ -30,6 +32,7 @@ class _HomeViewState extends State<HomeView> {
   @override
   void initState() {
     super.initState();
+    // El catalogo se comparte con vistas hijas para evitar recargas duplicadas.
     _catalogViewModel = CatalogViewModel(api: CatalogApi(ApiConfig.baseUrl));
     _catalogViewModel.loadInitialData();
   }
@@ -68,6 +71,7 @@ class _HomeViewState extends State<HomeView> {
           bottomNavigationBar: NavigationBar(
             selectedIndex: _selectedTab,
             onDestinationSelected: (index) {
+              // Algunas pestanas abren vistas dedicadas en lugar de cambiar el body.
               if (index == 1) {
                 _openCategories(context);
                 return;
@@ -314,6 +318,7 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
+  /// Asigna iconos locales a categorias cuando el backend no provee imagen.
   IconData _iconForCategory(int index) {
     const icons = [
       Icons.local_grocery_store_rounded,
@@ -328,6 +333,7 @@ class _HomeViewState extends State<HomeView> {
     return icons[index % icons.length];
   }
 
+  /// Confirma el cierre de sesion antes de limpiar la navegacion.
   Future<void> _logout(BuildContext context) async {
     final confirmed = await _confirmLogout(context);
     if (!confirmed || !context.mounted) {
@@ -340,6 +346,7 @@ class _HomeViewState extends State<HomeView> {
     Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
   }
 
+  /// Navega al comparador compartiendo el mismo `CatalogViewModel`.
   void _openBestOptions(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -349,6 +356,7 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
+  /// Reutiliza la vista de detalle del comparador desde home.
   void _openProductDetail(BuildContext context, Map<String, dynamic> product) {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -360,6 +368,7 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
+  /// Abre el listado completo de categorias.
   void _openCategories(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -368,28 +377,33 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
+  /// Abre clima usando la direccion del usuario como pista inicial.
   void _openWeather(BuildContext context, String locationHint) {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => WeatherView(initialCity: locationHint)),
     );
   }
 
+  /// Abre el modulo de ofertas.
   void _openOffers(BuildContext context) {
     Navigator.of(
       context,
     ).push(MaterialPageRoute(builder: (_) => const OffersView()));
   }
 
+  /// Abre el modulo de escaneo.
   void _openScan(BuildContext context) {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ScanView()));
   }
 
+  /// Abre la pantalla de perfil.
   void _openProfile(BuildContext context) {
     Navigator.of(
       context,
     ).push(MaterialPageRoute(builder: (_) => const ProfileView()));
   }
 
+  /// Muestra una confirmacion nativa antes de cerrar sesion.
   Future<bool> _confirmLogout(BuildContext context) async {
     final result = await showCupertinoDialog<bool>(
       context: context,
@@ -418,6 +432,7 @@ class _HomeViewState extends State<HomeView> {
   }
 }
 
+/// Encabezado con saludo, ubicacion y accesos rapidos.
 class _Header extends StatelessWidget {
   const _Header({
     required this.username,
@@ -498,6 +513,7 @@ class _Header extends StatelessWidget {
   }
 }
 
+/// Barra de busqueda con debounce para no saturar el backend.
 class _SearchBar extends StatefulWidget {
   const _SearchBar({required this.onSearch, required this.onClear});
 
@@ -512,6 +528,7 @@ class _SearchBarState extends State<_SearchBar> {
   final TextEditingController _controller = TextEditingController();
   Timer? _debounce;
 
+  /// Agrupa cambios rapidos de texto en una sola consulta.
   void _onChanged(String value) {
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 300), () {
@@ -519,6 +536,7 @@ class _SearchBarState extends State<_SearchBar> {
     });
   }
 
+  /// Fuerza una busqueda inmediata al enviar desde teclado.
   void _submitNow(String value) {
     _debounce?.cancel();
     widget.onSearch(value);
@@ -570,6 +588,7 @@ class _SearchBarState extends State<_SearchBar> {
   }
 }
 
+/// Tarjeta resumen del ahorro semanal sugerido.
 class _WeeklyHeroCard extends StatelessWidget {
   const _WeeklyHeroCard({
     required this.storesCount,
@@ -665,6 +684,7 @@ class _WeeklyHeroCard extends StatelessWidget {
   }
 }
 
+/// Indicador decorativo de paginas o bloques destacados.
 class _DotsIndicator extends StatelessWidget {
   const _DotsIndicator();
 
@@ -677,6 +697,7 @@ class _DotsIndicator extends StatelessWidget {
   }
 }
 
+/// Punto individual del indicador.
 class _Dot extends StatelessWidget {
   const _Dot({required this.active});
 
@@ -696,6 +717,7 @@ class _Dot extends StatelessWidget {
   }
 }
 
+/// Titulo de seccion con accion secundaria a la derecha.
 class _SectionTitle extends StatelessWidget {
   const _SectionTitle({
     required this.title,
@@ -735,6 +757,7 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
+/// Tarjeta compacta para una categoria dentro de la grilla de home.
 class _CategoryTile extends StatelessWidget {
   const _CategoryTile({
     required this.label,
@@ -790,6 +813,7 @@ class _CategoryTile extends StatelessWidget {
   }
 }
 
+/// Renderiza la imagen remota o un icono fallback para categorias.
 class _CategoryVisual extends StatelessWidget {
   const _CategoryVisual({
     required this.imageUrl,
@@ -828,6 +852,7 @@ class _CategoryVisual extends StatelessWidget {
   }
 }
 
+/// Tarjeta compacta de producto destacada en home.
 class _FeaturedProductCard extends StatelessWidget {
   const _FeaturedProductCard({
     required this.name,
@@ -926,6 +951,7 @@ class _FeaturedProductCard extends StatelessWidget {
   }
 }
 
+/// Imagen reducida del producto con fallback local.
 class _FeaturedProductVisual extends StatelessWidget {
   const _FeaturedProductVisual({required this.imageUrl});
 
@@ -967,6 +993,7 @@ class _FeaturedProductVisual extends StatelessWidget {
   }
 }
 
+/// Resumen rapido de la mejor opcion para un producto visible.
 class _TrackCard extends StatelessWidget {
   const _TrackCard({
     required this.storesCount,

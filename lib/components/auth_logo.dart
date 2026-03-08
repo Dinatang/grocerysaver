@@ -1,5 +1,7 @@
+// Logo y subtitulo reutilizables para las pantallas de acceso.
 import 'package:flutter/material.dart';
 
+/// Muestra la marca de la aplicacion con fallback si la imagen no existe.
 class AuthLogo extends StatelessWidget {
   const AuthLogo({super.key, this.size = 96, this.showSubtitle = true});
 

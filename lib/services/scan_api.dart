@@ -1,8 +1,12 @@
+// Cliente HTTP para busqueda y creacion de productos a partir de escaneo.
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
+import 'api_config.dart';
+import 'cache_status_reader.dart';
+
+/// Error especifico del flujo de escaneo.
 class ScanApiException implements Exception {
   ScanApiException(this.message, {this.statusCode});
 
@@ -16,12 +20,16 @@ class ScanApiException implements Exception {
   }
 }
 
+/// Servicio estatico para enviar codigos escaneados al backend.
 class ScanApi {
   const ScanApi._();
 
-  static String get baseUrl =>
-      kIsWeb ? 'http://127.0.0.1:8000/api' : 'http://10.0.2.2:8000/api';
+  static String get baseUrl => ApiConfig.baseUrl.replaceFirst(RegExp(r'/$'), '');
+  static String? _lastCacheStatus;
 
+  static String? get lastCacheStatus => _lastCacheStatus;
+
+  /// Escanea un codigo y opcionalmente crea el producto si faltan metadatos.
   static Future<Map<String, dynamic>> scanCode({
     required String code,
     String? codeType, // 'barcode' | 'qr'
@@ -59,6 +67,7 @@ class ScanApi {
       },
       body: jsonEncode(payload),
     );
+    _lastCacheStatus = CacheStatusReader.fromHeaders(res.headers);
 
     final dynamic decoded;
     try {

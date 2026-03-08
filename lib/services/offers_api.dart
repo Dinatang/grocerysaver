@@ -1,8 +1,12 @@
+// Cliente HTTP para ofertas paginadas y lectura del estado de cache.
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
+import 'api_config.dart';
+import 'cache_status_reader.dart';
+
+/// Resultado tipado de una pagina de ofertas.
 class OffersPage {
   const OffersPage({
     required this.offers,
@@ -17,14 +21,16 @@ class OffersPage {
   final int? totalCount;
 }
 
+/// Servicio estatico para consultar ofertas y su paginacion.
 class OffersApi {
   const OffersApi._();
 
-  // Web/iOS/desktop local: 127.0.0.1
-  // Android emulator: 10.0.2.2
-  static String get baseUrl =>
-      kIsWeb ? 'http://127.0.0.1:8000/api' : 'http://10.0.2.2:8000/api';
+  static String get baseUrl => ApiConfig.baseUrl.replaceFirst(RegExp(r'/$'), '');
+  static String? _lastCacheStatus;
 
+  static String? get lastCacheStatus => _lastCacheStatus;
+
+  /// Carga solo la coleccion de ofertas, ignorando la metadata de pagina.
   static Future<List<Map<String, dynamic>>> getOffers({
     bool active = true,
     int? storeId,
@@ -40,6 +46,7 @@ class OffersApi {
     return page.offers;
   }
 
+  /// Carga una pagina de ofertas y deduce si existe una siguiente pagina.
   static Future<OffersPage> getOffersPage({
     bool active = true,
     int? storeId,
@@ -59,6 +66,7 @@ class OffersApi {
 
     final uri = Uri.parse('$baseUrl/offers/').replace(queryParameters: query);
     final res = await http.get(uri, headers: const {'Accept': 'application/json'});
+    _lastCacheStatus = CacheStatusReader.fromHeaders(res.headers);
 
     final dynamic decoded;
     try {
@@ -118,6 +126,7 @@ class OffersApi {
     );
   }
 
+  /// Soporta respuestas planas y respuestas paginadas anidadas.
   static List<Map<String, dynamic>> _extractOfferMaps(Map<String, dynamic> body) {
     final raw = body['offers'] ?? body['results'];
 
@@ -141,12 +150,14 @@ class OffersApi {
     return const <Map<String, dynamic>>[];
   }
 
+  /// Convierte ids recibidos como texto o numero a enteros seguros.
   static int? _asInt(dynamic raw) {
     if (raw is int) return raw;
     if (raw is num) return raw.toInt();
     return int.tryParse((raw ?? '').toString().trim());
   }
 
+  /// Intenta recuperar el numero de pagina desde la URL `next`.
   static int? _parseNextPage(dynamic raw) {
     final next = (raw ?? '').toString().trim();
     if (next.isEmpty || next.toLowerCase() == 'null') return null;

@@ -1,8 +1,10 @@
+// Cliente HTTP para autenticacion, roles y almacenamiento de tokens.
 import 'dart:convert';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
+/// Error tipado para desacoplar la UI de excepciones HTTP genericas.
 class ApiException implements Exception {
   ApiException(this.message, {this.statusCode});
 
@@ -16,6 +18,7 @@ class ApiException implements Exception {
   }
 }
 
+/// Encapsula las operaciones de autenticacion contra la API REST.
 class AuthApi {
   AuthApi(String baseUrl)
     : baseUrl = baseUrl.replaceFirst(RegExp(r'/$'), ''),
@@ -29,6 +32,7 @@ class AuthApi {
     'Accept': 'application/json',
   };
 
+  /// Carga los roles disponibles para el formulario de registro.
   Future<List<String>> getRoles() async {
     const endpoint = '/auth/roles/';
     final res = await http.get(
@@ -63,6 +67,7 @@ class AuthApi {
     return parsed;
   }
 
+  /// Registra un usuario nuevo con los datos extendidos del formulario.
   Future<Map<String, dynamic>> register({
     required String username,
     required String email,
@@ -93,6 +98,7 @@ class AuthApi {
     return _decode(res, endpoint: endpoint);
   }
 
+  /// Verifica el correo y persiste tokens si el backend los devuelve.
   Future<Map<String, dynamic>> verifyEmail(String token) async {
     const endpoint = '/auth/verify-email/';
     final res = await http.post(
@@ -105,6 +111,7 @@ class AuthApi {
     return data;
   }
 
+  /// Inicia sesion y guarda los tokens de acceso localmente.
   Future<Map<String, dynamic>> login({
     required String email,
     required String password,
@@ -120,6 +127,7 @@ class AuthApi {
     return data;
   }
 
+  /// Punto de extension para login social basado en proveedor externo.
   Future<Map<String, dynamic>> socialLogin({
     required String provider,
     String? idToken,
@@ -154,6 +162,7 @@ class AuthApi {
     return data;
   }
 
+  /// Consulta el perfil autenticado actual.
   Future<Map<String, dynamic>> me() async {
     const endpoint = '/auth/me/';
     final access = await _storage.read(key: 'access');
@@ -170,6 +179,7 @@ class AuthApi {
     return _decode(res, endpoint: endpoint);
   }
 
+  /// Consulta una ruta protegida reservada para administradores.
   Future<Map<String, dynamic>> adminOnly() async {
     const endpoint = '/protected/admin-only/';
     final access = await _storage.read(key: 'access');
@@ -186,6 +196,7 @@ class AuthApi {
     return _decode(res, endpoint: endpoint);
   }
 
+  /// Cierra sesion en backend y limpia credenciales locales.
   Future<Map<String, dynamic>> logout() async {
     const endpoint = '/auth/logout/';
     final access = await _storage.read(key: 'access');
@@ -210,11 +221,13 @@ class AuthApi {
     return data;
   }
 
+  /// Borra manualmente los tokens persistidos.
   Future<void> clearTokens() async {
     await _storage.delete(key: 'access');
     await _storage.delete(key: 'refresh');
   }
 
+  /// Valida que la respuesta sea JSON y traduce errores a `ApiException`.
   Map<String, dynamic> _decode(http.Response res, {required String endpoint}) {
     final contentType = (res.headers['content-type'] ?? '').toLowerCase();
     final body = res.body.trim();
@@ -245,6 +258,7 @@ class AuthApi {
     );
   }
 
+  /// Persiste access y refresh tokens si el payload los incluye.
   Future<void> _saveTokensFrom(Map<String, dynamic> data) async {
     final tokens = data['tokens'];
     if (tokens is! Map<String, dynamic>) {
@@ -260,6 +274,7 @@ class AuthApi {
     }
   }
 
+  /// Intenta extraer el mensaje mas util desde el cuerpo de error.
   String _extractMessage(Map<String, dynamic> data) {
     if (data['detail'] != null) return data['detail'].toString();
     if (data['message'] != null) return data['message'].toString();
@@ -268,6 +283,7 @@ class AuthApi {
     return '';
   }
 
+  /// Limita el tamano del body para reportarlo sin inundar los errores.
   String _preview(String body) {
     if (body.isEmpty) return '(sin contenido)';
     const limit = 180;

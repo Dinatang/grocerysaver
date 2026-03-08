@@ -1,9 +1,11 @@
+// Pantalla de inicio de sesion.
 import 'package:flutter/material.dart';
 
 import '../components/app_backdrop.dart';
 import '../components/auth_logo.dart';
 import '../viewmodels/auth_viewmodel.dart';
 
+/// Formulario de acceso conectado al `AuthViewModel`.
 class LoginView extends StatefulWidget {
   const LoginView({super.key, required this.viewModel});
 
@@ -26,6 +28,7 @@ class _LoginViewState extends State<LoginView> {
     super.dispose();
   }
 
+  /// Valida el formulario y dispara el login.
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) {
       return;

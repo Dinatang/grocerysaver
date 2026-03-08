@@ -1,7 +1,9 @@
+// Estado de perfil, direcciones, notificaciones y rifas.
 import 'package:flutter/foundation.dart';
 
 import '../services/profile_api.dart';
 
+/// ViewModel que prepara datos del perfil para la pantalla `ProfileView`.
 class ProfileViewModel extends ChangeNotifier {
   ProfileViewModel({required ProfileApi api}) : _api = api;
 
@@ -25,6 +27,7 @@ class ProfileViewModel extends ChangeNotifier {
   List<Map<String, dynamic>> get raffles => _raffles;
   List<Map<String, dynamic>> get roleRequests => _roleRequests;
 
+  /// Carga todas las secciones del perfil en paralelo.
   Future<void> loadAll() async {
     _isLoading = true;
     _errorMessage = null;
@@ -50,10 +53,12 @@ class ProfileViewModel extends ChangeNotifier {
     }
   }
 
+  /// Fuerza una recarga completa del perfil.
   Future<void> refresh() async {
     await loadAll();
   }
 
+  /// Actualiza una preferencia localmente y revierte si el backend falla.
   Future<void> setNotificationPref(String key, bool value) async {
     if (key.trim().isEmpty) return;
     final previous = Map<String, dynamic>.from(_notificationPrefs);
@@ -74,6 +79,7 @@ class ProfileViewModel extends ChangeNotifier {
     }
   }
 
+  /// Envia una solicitud de cambio de rol y la agrega al estado visible.
   Future<bool> requestRoleChange({
     required String role,
     String reason = '',
@@ -90,6 +96,7 @@ class ProfileViewModel extends ChangeNotifier {
     }
   }
 
+  /// Devuelve un nombre de usuario presentable.
   String displayName() {
     final raw =
         _user?['username'] ??
@@ -99,29 +106,34 @@ class ProfileViewModel extends ChangeNotifier {
     return text.isEmpty ? 'Usuario' : text;
   }
 
+  /// Devuelve el correo principal o un fallback util.
   String email() {
     final text = (_user?['email'] ?? '').toString().trim();
     return text.isEmpty ? 'Sin correo' : text;
   }
 
+  /// Devuelve la puntuacion media del usuario.
   double rating() {
     final raw = _user?['rating'] ?? _user?['average_rating'];
     if (raw is num) return raw.toDouble();
     return double.tryParse((raw ?? '').toString()) ?? 5.0;
   }
 
+  /// Devuelve el numero de resenas del usuario.
   int reviewsCount() {
     final raw = _user?['reviews_count'] ?? _user?['reviews'];
     if (raw is int) return raw;
     return int.tryParse((raw ?? '').toString()) ?? 0;
   }
 
+  /// Entrega las claves de preferencias ya ordenadas para la UI.
   List<String> notificationKeys() {
     final keys = _notificationPrefs.keys.map((key) => key.toString()).toList();
     keys.sort();
     return keys;
   }
 
+  /// Interpreta flags de notificacion aunque lleguen como texto.
   bool notificationValue(String key) {
     final value = _notificationPrefs[key];
     if (value is bool) return value;
@@ -129,16 +141,19 @@ class ProfileViewModel extends ChangeNotifier {
     return text == 'true' || text == '1' || text == 'yes';
   }
 
+  /// Convierte listas dinamicas del backend a listas de mapas seguras.
   List<Map<String, dynamic>> _toMapList(dynamic value) {
     if (value is! List) return const [];
     return value.whereType<Map<String, dynamic>>().toList();
   }
 
+  /// Convierte mapas dinamicos a una estructura segura.
   Map<String, dynamic> _toMap(dynamic value) {
     if (value is Map<String, dynamic>) return value;
     return const {};
   }
 
+  /// Traduce fallos del servicio a texto para la interfaz.
   String _errorToText(Object error) {
     if (error is ProfileApiException) return error.message;
     return 'No se pudo cargar el perfil.';

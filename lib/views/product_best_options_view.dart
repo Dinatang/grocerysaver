@@ -1,8 +1,10 @@
+// Comparador de precios y detalle de mejores opciones por producto.
 import 'package:flutter/material.dart';
 
 import '../services/api_service.dart';
 import '../viewmodels/catalog_viewmodel.dart';
 
+/// Pantalla de comparacion de precios reutilizando el catalogo ya cargado.
 class ProductBestOptionsView extends StatefulWidget {
   const ProductBestOptionsView({super.key, required this.catalogViewModel});
 
@@ -17,20 +19,24 @@ class _ProductBestOptionsViewState extends State<ProductBestOptionsView> {
   Map<String, dynamic>? _compareData;
   bool _isComparing = false;
   String? _compareError;
+  String? _compareCacheStatus;
 
   @override
   void initState() {
     super.initState();
+    // La seleccion depende del primer frame porque el catalogo puede llegar despues.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _ensureSelectionAndCompare();
     });
   }
 
+  /// Recarga el catalogo y fuerza una nueva comparacion del producto activo.
   Future<void> _refresh() async {
     await widget.catalogViewModel.refresh();
     await _ensureSelectionAndCompare(force: true);
   }
 
+  /// Garantiza una seleccion valida antes de disparar el comparador.
   Future<void> _ensureSelectionAndCompare({bool force = false}) async {
     final products = _productsForCompare();
     if (products.isEmpty) {
@@ -58,6 +64,7 @@ class _ProductBestOptionsViewState extends State<ProductBestOptionsView> {
     }
   }
 
+  /// Consulta al backend la mejor opcion para el producto indicado.
   Future<void> _compareByProductId(int productId) async {
     setState(() {
       _isComparing = true;
@@ -69,6 +76,7 @@ class _ProductBestOptionsViewState extends State<ProductBestOptionsView> {
       if (!mounted) return;
       setState(() {
         _compareData = data;
+        _compareCacheStatus = ApiService.lastCacheStatus;
       });
     } catch (e) {
       if (!mounted) return;
@@ -84,6 +92,7 @@ class _ProductBestOptionsViewState extends State<ProductBestOptionsView> {
     }
   }
 
+  /// Construye la lista de productos comparables evitando duplicados por id.
   List<_CompareProductItem> _productsForCompare() {
     final source = widget.catalogViewModel.featuredProducts.isNotEmpty
         ? widget.catalogViewModel.featuredProducts
@@ -107,6 +116,7 @@ class _ProductBestOptionsViewState extends State<ProductBestOptionsView> {
     return items;
   }
 
+  /// Intenta resolver el identificador canonico del producto.
   int? _productId(Map<String, dynamic> product) {
     final raw = product['id'] ?? product['product_id'] ?? product['productId'];
     if (raw is int) return raw;
@@ -114,6 +124,7 @@ class _ProductBestOptionsViewState extends State<ProductBestOptionsView> {
     return int.tryParse((raw ?? '').toString().trim());
   }
 
+  /// Devuelve el nombre de la mejor tienda desde respuestas anidadas o planas.
   String _bestStore(Map<String, dynamic>? best) {
     if (best == null) return 'Sin datos';
 
@@ -131,11 +142,13 @@ class _ProductBestOptionsViewState extends State<ProductBestOptionsView> {
     return text.isEmpty ? 'Sin datos' : text;
   }
 
+  /// Extrae el valor de precio desde las claves mas comunes del backend.
   dynamic _bestPriceRaw(Map<String, dynamic>? best) {
     if (best == null) return null;
     return best['price'] ?? best['best_price'] ?? best['amount'];
   }
 
+  /// Formatea precios tolerando numeros y strings provenientes de la API.
   String _formatCurrencyRaw(dynamic raw) {
     if (raw == null) return 'N/A';
     final number = _asNum(raw);
@@ -150,11 +163,13 @@ class _ProductBestOptionsViewState extends State<ProductBestOptionsView> {
     return '\$${number.toStringAsFixed(2)}';
   }
 
+  /// Convierte valores numericos heterogeneos a `num`.
   num? _asNum(dynamic raw) {
     if (raw is num) return raw;
     return num.tryParse((raw ?? '').toString().trim());
   }
 
+  /// Extrae la tabla de precios lista para ordenarse y mostrarse.
   List<Map<String, dynamic>> _priceRows(Map<String, dynamic>? data) {
     final rows = data?['prices'];
     if (rows is! List) return const [];
@@ -172,6 +187,7 @@ class _ProductBestOptionsViewState extends State<ProductBestOptionsView> {
             ? _selectedProductId
             : (products.isEmpty ? null : products.first.id);
 
+        // Si el producto seleccionado desaparece tras un refresh, se corrige al siguiente frame.
         if (_selectedProductId != selectedId) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted) return;
@@ -187,6 +203,7 @@ class _ProductBestOptionsViewState extends State<ProductBestOptionsView> {
         final savings = _compareData?['savings_vs_most_expensive'];
         final prices = _priceRows(_compareData)
           ..sort((a, b) {
+            // Se ordena por precio ascendente para resaltar la mejor opcion arriba.
             final aValue = _asNum(a['price'] ?? a['amount'] ?? a['value']);
             final bValue = _asNum(b['price'] ?? b['amount'] ?? b['value']);
             if (aValue == null && bValue == null) return 0;
@@ -292,6 +309,14 @@ class _ProductBestOptionsViewState extends State<ProductBestOptionsView> {
                     message: _compareError!,
                     color: const Color(0xFFFCEAEA),
                     textColor: const Color(0xFFAC2E2E),
+                  ),
+                ],
+                if (_compareCacheStatus != null) ...[
+                  const SizedBox(height: 12),
+                  _InfoBox(
+                    message: 'Cache backend: $_compareCacheStatus',
+                    color: const Color(0xFFE9F5ED),
+                    textColor: const Color(0xFF20573A),
                   ),
                 ],
                 if (_isComparing) ...[
@@ -448,6 +473,7 @@ class _ProductBestOptionsViewState extends State<ProductBestOptionsView> {
   }
 }
 
+/// Vista de detalle para revisar todas las tiendas de un producto.
 class ProductBestOptionDetailView extends StatelessWidget {
   const ProductBestOptionDetailView({
     super.key,
@@ -530,6 +556,7 @@ class ProductBestOptionDetailView extends StatelessWidget {
   }
 }
 
+/// Tarjeta resumen de un producto dentro del listado de mejores opciones.
 class _BestOptionCard extends StatelessWidget {
   const _BestOptionCard({
     required this.name,
@@ -619,6 +646,7 @@ class _BestOptionCard extends StatelessWidget {
   }
 }
 
+/// Tarjeta compacta para mostrar una metrica clave del comparador.
 class _MetricTile extends StatelessWidget {
   const _MetricTile({
     required this.icon,
@@ -674,6 +702,7 @@ class _MetricTile extends StatelessWidget {
   }
 }
 
+/// Caja simple de mensajes informativos o de error.
 class _InfoBox extends StatelessWidget {
   const _InfoBox({
     required this.message,
@@ -705,6 +734,7 @@ class _InfoBox extends StatelessWidget {
   }
 }
 
+/// Modelo privado que une id, nombre y payload original del producto.
 class _CompareProductItem {
   const _CompareProductItem({
     required this.id,

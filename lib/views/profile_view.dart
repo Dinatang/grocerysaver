@@ -1,9 +1,12 @@
+// Pantalla de perfil con secciones de cuenta, preferencias y solicitudes.
 import 'package:flutter/material.dart';
 
 import '../services/api_config.dart';
 import '../services/profile_api.dart';
 import '../viewmodels/profile_viewmodel.dart';
+import 'export_jobs_view.dart';
 
+/// Muestra la informacion agregada del perfil autenticado.
 class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
 
@@ -137,6 +140,13 @@ class _ProfileViewState extends State<ProfileView> {
                       subtitle: 'Solicita ser proveedor o repartidor',
                       onTap: _showRoleRequestDialog,
                     ),
+                    _MenuRow(
+                      color: const Color(0xFF2F7D57),
+                      icon: Icons.file_download_rounded,
+                      title: 'Exportar productos',
+                      subtitle: 'Encola el CSV y consulta el estado',
+                      onTap: _openExportJobs,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -187,6 +197,7 @@ class _ProfileViewState extends State<ProfileView> {
     );
   }
 
+  /// Muestra el mapa crudo del usuario para depuracion ligera.
   void _showUserData() {
     final user = _viewModel.user ?? const {};
     showModalBottomSheet<void>(
@@ -200,6 +211,7 @@ class _ProfileViewState extends State<ProfileView> {
     );
   }
 
+  /// Muestra las direcciones registradas en una hoja inferior.
   void _showAddresses() {
     final addresses = _viewModel.addresses;
     showModalBottomSheet<void>(
@@ -220,6 +232,7 @@ class _ProfileViewState extends State<ProfileView> {
     );
   }
 
+  /// Muestra las rifas activas disponibles para el usuario.
   void _showRaffles() {
     final raffles = _viewModel.raffles;
     showModalBottomSheet<void>(
@@ -240,6 +253,7 @@ class _ProfileViewState extends State<ProfileView> {
     );
   }
 
+  /// Abre un modal editable para cambiar preferencias de notificacion.
   Future<void> _showNotificationPrefs() async {
     await showModalBottomSheet<void>(
       context: context,
@@ -288,6 +302,7 @@ class _ProfileViewState extends State<ProfileView> {
     );
   }
 
+  /// Solicita al usuario el rol y motivo para crear una peticion.
   Future<void> _showRoleRequestDialog() async {
     final roleController = TextEditingController(text: 'proveedor');
     final reasonController = TextEditingController();
@@ -340,6 +355,14 @@ class _ProfileViewState extends State<ProfileView> {
     );
   }
 
+  /// Abre la vista dedicada al flujo de exportacion por jobs.
+  void _openExportJobs() {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const ExportJobsView()));
+  }
+
+  /// Convierte claves snake_case a etiquetas mas legibles.
   String _formatPrefLabel(String raw) {
     final text = raw.replaceAll('_', ' ').trim();
     if (text.isEmpty) return raw;
@@ -347,6 +370,7 @@ class _ProfileViewState extends State<ProfileView> {
   }
 }
 
+/// Tarjeta superior con avatar, nombre y correo.
 class _UserCard extends StatelessWidget {
   const _UserCard({required this.name, required this.email});
 
@@ -411,6 +435,7 @@ class _UserCard extends StatelessWidget {
   }
 }
 
+/// Tarjeta compacta con rating y numero de resenas.
 class _RatingCard extends StatelessWidget {
   const _RatingCard({required this.rating, required this.reviewsCount});
 
@@ -460,6 +485,7 @@ class _RatingCard extends StatelessWidget {
   }
 }
 
+/// Titulo de seccion estilo iOS para grupos del perfil.
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader({required this.title});
 
@@ -479,6 +505,7 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
+/// Contenedor comun para agrupar opciones del perfil.
 class _GroupCard extends StatelessWidget {
   const _GroupCard({required this.children});
 
@@ -496,6 +523,7 @@ class _GroupCard extends StatelessWidget {
   }
 }
 
+/// Fila de menu navegable con icono, titulo y subtitulo opcional.
 class _MenuRow extends StatelessWidget {
   const _MenuRow({
     required this.color,
@@ -565,6 +593,7 @@ class _MenuRow extends StatelessWidget {
   }
 }
 
+/// Variante con switch para preferencias locales.
 class _SwitchRow extends StatelessWidget {
   const _SwitchRow({
     required this.color,
@@ -614,6 +643,7 @@ class _SwitchRow extends StatelessWidget {
   }
 }
 
+/// Hoja inferior simple usada para listas de texto.
 class _SimpleListSheet extends StatelessWidget {
   const _SimpleListSheet({required this.title, required this.lines});
 
@@ -646,6 +676,7 @@ class _SimpleListSheet extends StatelessWidget {
   }
 }
 
+/// Banner de error reutilizable para la pantalla de perfil.
 class _ErrorBanner extends StatelessWidget {
   const _ErrorBanner({required this.message});
 
