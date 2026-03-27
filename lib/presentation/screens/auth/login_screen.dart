@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../../app/app_routes.dart';
@@ -24,6 +25,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   StreamSubscription<String>? _googleIdTokenSubscription;
   bool _googleListenerAttached = false;
+  bool _obscurePassword = true;
 
   @override
   void didChangeDependencies() {
@@ -72,115 +74,252 @@ class _LoginScreenState extends State<LoginScreen> {
     return Consumer<AuthProvider>(
       builder: (context, auth, _) {
         return AuthGradientScaffold(
-          child: ListView(
-            children: [
-              const SizedBox(height: 20),
-              AuthCard(
-                logo: Image.asset(
-                  'assets/images/logo_grocesy.png',
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Icon(
-                      Icons.lock_person_rounded,
-                      color: Colors.white,
-                      size: 42,
-                    );
-                  },
-                ),
-                title: 'Iniciar sesion',
-                subtitle: '',
-                footer: AuthSecondaryLink(
-                  label: 'No tienes cuenta?',
-                  actionText: 'Crear cuenta',
-                  onTap: () => Navigator.pushNamed(context, AppRoutes.register),
-                ),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      if (auth.errorMessage != null) ...[
-                        _AuthErrorBox(message: auth.errorMessage!),
-                        const SizedBox(height: 18),
-                      ],
-                      AuthField(
-                        label: 'Correo electronico',
-                        hintText: 'Ingresa tu correo',
-                        icon: Icons.mail_outline_rounded,
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        validator: (value) =>
-                            (value ?? '').contains('@') ? null : 'Ingresa un correo valido',
-                      ),
-                      const SizedBox(height: 18),
-                      AuthField(
-                        label: 'Contrasena',
-                        hintText: 'Ingresa tu contrasena',
-                        icon: Icons.lock_outline_rounded,
-                        controller: _passwordController,
-                        obscureText: true,
-                        validator: (value) =>
-                            (value ?? '').length >= 6 ? null : 'Minimo 6 caracteres',
-                      ),
-                      const SizedBox(height: 22),
-                      AuthPrimaryButton(
-                        label: auth.isSubmitting ? 'Ingresando...' : 'Entrar',
-                        onPressed: auth.isSubmitting ? null : _submit,
-                      ),
-                      const SizedBox(height: 22),
-                      const AuthDividerLabel(label: 'O continua con'),
-                      const SizedBox(height: 18),
-                      if (kIsWeb) ...[
-                        const GoogleWebSignInButton(),
-                        const SizedBox(height: 18),
-                      ] else ...[
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            AuthSocialButton(
-                              onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Inicio con Facebook aun no implementado')),
-                              ),
-                              child: const Icon(
-                                Icons.facebook_rounded,
-                                color: Color(0xFF1877F2),
-                                size: 28,
-                              ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(24, 24, 24, 24 + MediaQuery.of(context).viewInsets.bottom),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight - 48),
+                  child: TweenAnimationBuilder<double>(
+                    duration: const Duration(milliseconds: 650),
+                    tween: Tween(begin: 0, end: 1),
+                    builder: (context, value, child) {
+                      return Opacity(
+                        opacity: value,
+                        child: Transform.translate(
+                          offset: Offset(0, 24 * (1 - value)),
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: 12),
+                        Center(
+                          child: Container(
+                            width: 88,
+                            height: 88,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.95),
+                              borderRadius: BorderRadius.circular(24),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x22000000),
+                                  blurRadius: 18,
+                                  offset: Offset(0, 10),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 18),
-                            AuthSocialButton(
-                              onTap: auth.isSubmitting ? () {} : _loginWithGoogle,
-                              child: const Text(
-                                'G',
-                                style: TextStyle(
-                                  color: Color(0xFFDB4437),
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.w800,
+                            child: Image.asset(
+                              'assets/images/logo_grocesy.png',
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Icon(
+                                  Icons.lock_outline_rounded,
+                                  color: Color(0xFF2E7D32),
+                                  size: 38,
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        Text(
+                          'Bienvenido',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.poppins(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF1B5E20),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Inicia sesion para continuar',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.poppins(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w500,
+                            color: const Color(0xFF4C6B50),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              if (auth.errorMessage != null) ...[
+                                _AuthErrorBox(message: auth.errorMessage!),
+                                const SizedBox(height: 16),
+                              ],
+                              _LoginField(
+                                label: 'Email',
+                                hintText: '',
+                                icon: Icons.email_outlined,
+                                controller: _emailController,
+                                keyboardType: TextInputType.emailAddress,
+                                validator: (value) {
+                                  final text = (value ?? '').trim();
+                                  if (text.isEmpty) return 'Ingresa tu correo';
+                                  if (!text.contains('@')) return 'Correo invalido';
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                              _LoginField(
+                                label: 'Password',
+                                hintText: '',
+                                icon: Icons.lock_outline_rounded,
+                                controller: _passwordController,
+                                obscureText: _obscurePassword,
+                                suffixIcon: IconButton(
+                                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                                  icon: Icon(
+                                    _obscurePassword
+                                        ? Icons.visibility_off_outlined
+                                        : Icons.visibility_outlined,
+                                    color: const Color(0xFF4C6B50),
+                                  ),
+                                ),
+                                validator: (value) => (value ?? '').length >= 6
+                                    ? null
+                                    : 'Minimo 6 caracteres',
+                              ),
+                              const SizedBox(height: 20),
+                              SizedBox(
+                                height: 52,
+                                child: FilledButton(
+                                  onPressed: auth.isSubmitting ? null : _submit,
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: const Color(0xFF2E7D32),
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    elevation: 2,
+                                  ),
+                                  child: Text(
+                                    auth.isSubmitting ? 'Ingresando...' : 'Iniciar sesion',
+                                    style: const TextStyle(fontWeight: FontWeight.w700),
+                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 18),
-                            AuthSocialButton(
-                              onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Inicio con Apple aun no implementado')),
+                              const SizedBox(height: 16),
+                              if (kIsWeb) ...[
+                                const GoogleWebSignInButton(),
+                                const SizedBox(height: 12),
+                              ] else ...[
+                                OutlinedButton.icon(
+                                  onPressed: auth.isSubmitting ? null : _loginWithGoogle,
+                                  style: OutlinedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    side: const BorderSide(color: Color(0xFFB2CBB4)),
+                                    foregroundColor: const Color(0xFF1B5E20),
+                                  ),
+                                  icon: const Icon(Icons.g_mobiledata_rounded, size: 28),
+                                  label: const Text('Continuar con Google'),
+                                ),
+                                const SizedBox(height: 12),
+                              ],
+                              TextButton(
+                                onPressed: () => Navigator.pushNamed(context, AppRoutes.register),
+                                child: const Text('¿No tienes cuenta? Registrate'),
                               ),
-                              child: const Icon(
-                                Icons.apple_rounded,
-                                color: Color(0xFF111111),
-                                size: 28,
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ],
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              );
+            },
           ),
         );
       },
+    );
+  }
+}
+
+class _LoginField extends StatelessWidget {
+  const _LoginField({
+    required this.label,
+    required this.hintText,
+    required this.icon,
+    this.controller,
+    this.keyboardType,
+    this.obscureText = false,
+    this.suffixIcon,
+    this.validator,
+  });
+
+  final String label;
+  final String hintText;
+  final IconData icon;
+  final TextEditingController? controller;
+  final TextInputType? keyboardType;
+  final bool obscureText;
+  final Widget? suffixIcon;
+  final String? Function(String?)? validator;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF2E7D32),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x14000000),
+                blurRadius: 14,
+                offset: Offset(0, 8),
+              ),
+            ],
+          ),
+          child: TextFormField(
+            controller: controller,
+            keyboardType: keyboardType,
+            obscureText: obscureText,
+            decoration: InputDecoration(
+              hintText: hintText,
+              prefixIcon: Icon(icon, color: const Color(0xFF2E7D32)),
+              suffixIcon: suffixIcon,
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
+                borderSide: const BorderSide(color: Color(0xFFDCE6DD)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
+                borderSide: const BorderSide(color: Color(0xFFDCE6DD)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
+                borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 1.3),
+              ),
+            ),
+            validator: validator,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -210,3 +349,8 @@ class _AuthErrorBox extends StatelessWidget {
     );
   }
 }
+
+
+
+
+

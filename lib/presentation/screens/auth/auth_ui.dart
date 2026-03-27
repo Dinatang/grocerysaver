@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class AuthGradientScaffold extends StatelessWidget {
   const AuthGradientScaffold({
@@ -19,9 +20,8 @@ class AuthGradientScaffold extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Color(0xFF2D7CFF),
-              Color(0xFF6C42F5),
-              Color(0xFFFF4FC3),
+              Color(0xFFE8F5E9),
+              Color(0xFFC8E6C9),
             ],
           ),
         ),
@@ -30,12 +30,12 @@ class AuthGradientScaffold extends StatelessWidget {
             const Positioned(
               top: -80,
               left: -40,
-              child: _GlowOrb(size: 220, color: Color(0x66FFFFFF)),
+              child: _GlowOrb(size: 220, color: Color(0x88D8EEDB)),
             ),
             const Positioned(
               bottom: -60,
               right: -20,
-              child: _GlowOrb(size: 200, color: Color(0x55FFFFFF)),
+              child: _GlowOrb(size: 200, color: Color(0x66D8EEDB)),
             ),
             SafeArea(
               child: Center(
@@ -169,6 +169,7 @@ class AuthField extends StatelessWidget {
     this.controller,
     this.keyboardType,
     this.obscureText = false,
+    this.inputFormatters,
     this.validator,
   });
 
@@ -178,6 +179,7 @@ class AuthField extends StatelessWidget {
   final TextEditingController? controller;
   final TextInputType? keyboardType;
   final bool obscureText;
+  final List<TextInputFormatter>? inputFormatters;
   final String? Function(String?)? validator;
 
   @override
@@ -197,6 +199,7 @@ class AuthField extends StatelessWidget {
           controller: controller,
           keyboardType: keyboardType,
           obscureText: obscureText,
+          inputFormatters: inputFormatters,
           autofillHints: const <String>[],
           enableSuggestions: false,
           autocorrect: false,
@@ -456,4 +459,9 @@ class _GlowOrb extends StatelessWidget {
     );
   }
 }
+
+
+
+
+
 
